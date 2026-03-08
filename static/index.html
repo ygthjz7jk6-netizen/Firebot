@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebot Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&display=swap" rel="stylesheet">
+  <style>
+    /* ═══ MISTRAL LE CHAT THEME VARIABLES ═══ */
+    :root {
+      /* Default Light Mode */
+      --bg-primary: #FFFBED;
+      --bg-secondary: #fffef5;
+      --bg-tertiary: #fffdf0;
+      --bg-card: #FFFBED;
+
+      --text-primary: #1e1e1e;
+      --text-secondary: #5a5a5a;
+      --text-dim: #8b8b8b;
+
+      --border: #e5e7eb;
+      --border-light: #f3f4f6;
+
+      --accent: #F97316;
+      /* Mistral Orange */
+      --accent-dim: #F973161a;
+      --accent-hover: #ea580c;
+
+      --user-bubble: #f3f4f6;
+      --user-bubble-text: #111827;
+
+      --log-bg: #f9f9fa;
+      --error: #ef4444;
+      --success: #10b981;
+
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: none;
+      /* Flat design */
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #121212;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-card: #1f1f22;
+
+      --text-primary: #FFF9CA;
+      --text-secondary: #a1a1aa;
+      --text-dim: #71717a;
+
+      --border: #27272a;
+      --border-light: #3f3f46;
+
+      --accent: #F97316;
+      --accent-dim: #F9731620;
+      --accent-hover: #ea580c;
+
+      --user-bubble: #27272a;
+      --user-bubble-text: #f4f4f5;
+
+      --log-bg: #09090b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Doto', monospace;
+      font-weight: 700;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-secondary);
+    }
+
+    .status-badge.online .status-dot {
+      background: var(--success);
+    }
+
+    .status-badge.offline .status-dot {
+      background: var(--error);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ═══ MAIN LAYOUT ═══ */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .sidebar-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .task-item:hover {
+      border-color: var(--text-dim);
+    }
+
+    .task-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .task-dot.open {
+      background: var(--accent);
+    }
+
+    .task-dot.done {
+      background: var(--success);
+    }
+
+    .task-empty {
+      color: var(--text-dim);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ═══ ORDERS WIDGET ═══ */
+    .order-item {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .order-customer {
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .order-products {
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.4;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .cmd-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cmd-item {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .cmd-item code {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Doto', monospace;
+      font-size: 12px;
+    }
+
+    /* ═══ CHAT AREA ═══ */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .message {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.agent {
+      justify-content: flex-start;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .msg-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      animation: mascot-float 1s steps(8) infinite;
+    }
+
+    @keyframes mascot-float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+
+    .message.user .msg-avatar {
+      display: none;
+      /* Hide avatar for user in modern flat chat */
+    }
+
+    .msg-bubble {
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.6;
+      word-break: break-word;
+      max-width: 85%;
+    }
+
+    .message.user .msg-bubble {
+      background: transparent;
+      color: var(--text-primary);
+      padding: 4px 0;
+      border-radius: 0;
+      border: none;
+    }
+
+    .message.agent .msg-bubble {
+      background: transparent;
+      color: var(--text-primary);
+      padding: 4px 0;
+      max-width: 90%;
+    }
+
+    .msg-bubble pre {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: 'Doto', monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .msg-bubble code {
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Doto', monospace;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+
+    .msg-bubble pre code {
+      background: transparent;
+      padding: 0;
+      border: none;
+    }
+
+    .msg-bubble strong {
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+
+    .msg-bubble p {
+      margin-bottom: 12px;
+    }
+
+    .msg-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .thinking {
+      align-self: flex-start;
+      display: flex;
+      gap: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .thinking .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .thinking-dots {
+      padding: 8px 0;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .thinking-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s infinite;
+    }
+
+    .thinking-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .thinking-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes blink {
+
+      0%,
+      80%,
+      100% {
+        opacity: 0.3;
+      }
+
+      40% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+
+    /* ═══ INPUT ═══ */
+    .input-area {
+      padding: 20px 24px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .input-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      width: 100%;
+      max-width: 840px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--text-dim);
+    }
+
+    .input-wrap textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 6px 4px;
+      color: var(--text-primary);
+      font-family: 'Doto', monospace;
+      font-size: 15px;
+      font-weight: 800;
+      resize: none;
+      outline: none;
+      min-height: 36px;
+      max-height: 200px;
+      line-height: 1.5;
+    }
+
+    .input-wrap textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .send-btn:disabled {
+      background: var(--bg-tertiary);
+      color: var(--text-dim);
+      cursor: not-allowed;
+    }
+
+    /* ═══ LOG PANEL ═══ */
+    .log-panel {
+      background: var(--log-bg);
+      border-top: 1px solid var(--border);
+      overflow: hidden;
+      transition: height 0.3s ease;
+      height: 0;
+      flex-shrink: 0;
+    }
+
+    .log-panel.open {
+      height: 200px;
+    }
+
+    .log-content {
+      padding: 12px 24px;
+      overflow-y: auto;
+      height: 100%;
+      font-family: 'Doto', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      padding: 2px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-entry .time {
+      color: var(--text-dim);
+    }
+
+    .log-entry .info {
+      color: var(--text-primary);
+    }
+
+    .log-entry .warn {
+      color: #f59e0b;
+    }
+
+    .log-entry .err {
+      color: var(--error);
+    }
+
+    /* ═══ SCROLLBAR ═══ */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-dim);
+    }
+
+    /* ═══ LOG TOGGLE BAR ═══ */
+    .log-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .log-bar:hover {
+      background: var(--bg-secondary);
+    }
+
+    .log-bar span {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .message.user {
+        justify-content: flex-end;
+      }
+
+      .message.agent {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <img src="/static/logo.png" class="header-logo" alt="Logo">
+      <h1>Firebot Assistant</h1>
+    </div>
+    <div class="header-right">
+      <div class="status-badge online" id="statusBadge">
+        <span class="status-dot"></span>
+        <span id="statusText">Online</span>
+      </div>
+      <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()"
+        title="Toggle Light/Dark Theme">🌙</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Paměť</div>
+        <div class="stat-row">
+          <span class="stat-label">Vzpomínek</span>
+          <span class="stat-value" id="memCount">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Otevřených úkolů</span>
+          <span class="stat-value" id="taskCount">—</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Objednávky</div>
+        <div id="orderList">
+          <div class="task-empty">Žádné nové objednávky</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Úkoly</div>
+        <div id="taskList">
+          <div class="task-empty">Žádné úkoly</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Příkazy</div>
+        <div class="cmd-list">
+          <div class="cmd-item"><code>úkol:</code> nový úkol</div>
+          <div class="cmd-item"><code>úkoly</code> seznam</div>
+          <div class="cmd-item"><code>hotovo:</code> splněno</div>
+          <div class="cmd-item"><code>zapomeň</code> téma</div>
+          <div class="cmd-item"><code>zapamatuj</code> info</div>
+          <div class="cmd-item"><code>vzpomeň</code> hledání</div>
+          <div class="cmd-item"><code>paměť</code> statistiky</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-container">
+      <div class="messages" id="messages">
+        <div class="message agent">
+          <div class="msg-avatar"><img src="/static/mascot.png" alt="Agent"></div>
+          <div class="msg-bubble">
+            <p>Ahoj! Jsem tvůj Firebot. Napiš mi co potřebuješ zanalyzovat nebo vyřešit.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div class="input-area">
+        <div class="input-wrap">
+          <textarea id="input" placeholder="Napište zprávu..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>↑</button>
+        </div>
+      </div>
+
+      <!-- LOG BAR -->
+      <div class="log-bar" onclick="toggleLog()">
+        <span>Vývojářský Log <span id="logToggleIcon">▲</span></span>
+      </div>
+
+      <!-- LOG PANEL -->
+      <div class="log-panel" id="logPanel">
+        <div class="log-content" id="logContent">
+          <div class="log-entry"><span class="time">[—]</span> Připojování k serveru...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══ THEME MANAGEMENT ═══
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      const themeToSet = savedTheme || (prefersDark ? 'dark' : 'light');
+      setTheme(themeToSet);
+    }
+
+    function setTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName);
+      localStorage.setItem('theme', themeName);
+
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      if (themeName === 'dark') {
+        toggleBtn.textContent = '☀️';
+      } else {
+        toggleBtn.textContent = '🌙';
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    }
+
+    // Spuštění tématu hned
+    initTheme();
+
+    // ═══ WEBSOCKET ═══
+    let ws = null;
+    let reconnectTimer = null;
+    let isResponding = false;
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+      ws.onopen = () => {
+        setStatus('online', 'Online');
+        addLog('Připojeno', 'info');
+        document.getElementById('sendBtn').disabled = false;
+      };
+
+      ws.onclose = () => {
+        setStatus('offline', 'Offline');
+        addLog('Odpojeno — znovu za 3s', 'warn');
+        document.getElementById('sendBtn').disabled = true;
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => {
+        setStatus('offline', 'Chyba');
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      };
+    }
+
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'init':
+          updateStats(data.stats);
+          updateTasks(data.tasks);
+          addLog('Firebot inicializován', 'info');
+          break;
+
+        case 'thinking':
+          showThinking();
+          addLog('Firebot přemýšlí...', 'info');
+          break;
+
+        case 'response':
+          hideThinking();
+          addAgentMessage(data.text);
+          isResponding = false;
+          enableInput();
+          break;
+
+        case 'log':
+          addLog(data.text, 'info');
+          break;
+
+        case 'stats_update':
+          updateStats(data.stats);
+          if (data.tasks) updateTasks(data.tasks);
+          break;
+
+        case 'orders_update':
+          updateOrders(data.orders);
+          break;
+
+        case 'error':
+          hideThinking();
+          addAgentMessage('❌ ' + data.text);
+          isResponding = false;
+          enableInput();
+          addLog(data.text, 'err');
+          break;
+      }
+    }
+
+    // ═══ MESSAGES ═══
+    function sendMessage() {
+      const input = document.getElementById('input');
+      const sendBtn = document.getElementById('sendBtn');
+
+      if (isResponding) {
+        // Stop functionality (Frontend only as backend is synchronous)
+        isResponding = false;
+        hideThinking();
+        enableInput();
+        addLog('Generování zastaveno (lokálně)', 'warn');
+        return;
+      }
+
+      const text = input.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      addUserMessage(text);
+      ws.send(JSON.stringify({ type: 'message', text }));
+
+      input.value = '';
+      input.style.height = 'auto';
+      isResponding = true;
+      disableInput();
+
+      // Keep send button enabled but change to STOP icon
+      sendBtn.disabled = false;
+      sendBtn.textContent = '■';
+    }
+
+    function addUserMessage(text) {
+      const el = document.createElement('div');
+      el.className = 'message user';
+      el.innerHTML = `
+    <div class="msg-bubble">${escapeHtml(text)}</div>
+  `;
+      document.getElementById('messages').appendChild(el);
+      scrollToBottom();
+    }
+
+    function addAgentMessage(text) {
+      const el = document.createElement('div');
+      el.className = 'message agent';
+      el.innerHTML = `
+    <div class="msg-avatar"><img src="/static/mascot.png" alt="Agent"></div>
+    <div class="msg-bubble">${formatMessage(text)}</div>
+  `;
+      document.getElementById('messages').appendChild(el);
+      scrollToBottom();
+    }
+
+    function showThinking() {
+      hideThinking();
+      const el = document.createElement('div');
+      el.className = 'thinking';
+      el.id = 'thinkingIndicator';
+      el.innerHTML = `
+    <div class="msg-avatar"><img src="/static/mascot.png" alt="Agent"></div>
+    <div class="thinking-dots"><span></span><span></span><span></span></div>
+  `;
+      document.getElementById('messages').appendChild(el);
+      scrollToBottom();
+    }
+
+    function hideThinking() {
+      const el = document.getElementById('thinkingIndicator');
+      if (el) el.remove();
+    }
+
+    // ═══ FORMATTING ═══
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatMessage(text) {
+      let html = escapeHtml(text);
+      // Code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Bold
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      // Format paragraphs properly instead of just <br>
+      let paragraphs = html.split('\n\n').filter(p => p.trim() !== '');
+      html = paragraphs.map(p => {
+        // If it's a code block, leave it
+        if (p.startsWith('<pre>')) return p;
+        // Convert single newlines to <br> inside paragraphs
+        p = p.replace(/\n/g, '<br>');
+        return `<p>${p}</p>`;
+      }).join('');
+
+      return html;
+    }
+
+    function scrollToBottom() {
+      const el = document.getElementById('messages');
+      setTimeout(() => el.scrollTop = el.scrollHeight, 50);
+    }
+
+    // ═══ INPUT ═══
+    function disableInput() {
+      document.getElementById('input').disabled = true;
+      document.getElementById('sendBtn').disabled = true;
+    }
+
+    function enableInput() {
+      const input = document.getElementById('input');
+      const sendBtn = document.getElementById('sendBtn');
+      input.disabled = false;
+      input.focus();
+      sendBtn.textContent = '↑';
+      checkInputStatus();
+    }
+
+    function checkInputStatus() {
+      const input = document.getElementById('input');
+      const sendBtn = document.getElementById('sendBtn');
+      if (input.value.trim().length > 0 && ws && ws.readyState === WebSocket.OPEN) {
+        sendBtn.disabled = false;
+      } else {
+        sendBtn.disabled = true;
+      }
+    }
+
+    // Auto-resize textarea
+    document.getElementById('input').addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+      checkInputStatus();
+    });
+
+    // Enter to send, Shift+Enter for newline
+    document.getElementById('input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!document.getElementById('sendBtn').disabled) {
+          sendMessage();
+        }
+      }
+    });
+
+    // ═══ SIDEBAR ═══
+    function updateStats(stats) {
+      if (!stats) return;
+      document.getElementById('memCount').textContent = stats.total_memories ?? '—';
+      document.getElementById('taskCount').textContent = stats.open_tasks ?? '0';
+    }
+
+    function updateTasks(tasks) {
+      const el = document.getElementById('taskList');
+      if (!tasks || tasks.length === 0) {
+        el.innerHTML = '<div class="task-empty">Žádné úkoly</div>';
+        return;
+      }
+      el.innerHTML = tasks.map(t => `
+    <div class="task-item">
+      <div class="task-dot ${t.status}"></div>
+      <span>${escapeHtml(t.text)}</span>
+    </div>
+  `).join('');
+    }
+
+    function updateOrders(orders) {
+      const el = document.getElementById('orderList');
+      if (!orders || orders.length === 0) {
+        el.innerHTML = '<div class="task-empty">Žádné nové objednávky</div>';
+        return;
+      }
+      el.innerHTML = orders.map(o => `
+    <div class="order-item">
+      <span class="order-customer">${escapeHtml(o.customer)}</span>
+      <span class="order-products">${escapeHtml(o.products)}</span>
+    </div>
+  `).join('');
+    }
+
+    // ═══ LOG ═══
+    function toggleLog() {
+      const panel = document.getElementById('logPanel');
+      panel.classList.toggle('open');
+      document.getElementById('logToggleIcon').textContent = panel.classList.contains('open') ? '▼' : '▲';
+    }
+
+    function addLog(text, cls = '') {
+      const el = document.getElementById('logContent');
+      const now = new Date().toLocaleTimeString('cs-CZ');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="time">[${now}]</span> <span class="${cls}">${escapeHtml(text)}</span>`;
+      el.appendChild(entry);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    // ═══ STATUS ═══
+    function setStatus(cls, text) {
+      const badge = document.getElementById('statusBadge');
+      badge.className = `status-badge ${cls}`;
+      document.getElementById('statusText').textContent = text;
+    }
+
+    // ═══ INIT ═══
+    connect();
+    document.getElementById('input').focus();
+  </script>
+</body>
+
+</html>

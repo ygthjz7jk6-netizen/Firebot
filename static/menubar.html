@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebot Widget</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FFFBEDee;
+            /* Semi-transparent */
+            --text-primary: #1e1e1e;
+            --accent: #F97316;
+            --border: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212ee;
+            --text-primary: #FFF9CA;
+            --border: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Doto', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            -webkit-app-region: drag;
+            /* Allow dragging anywhere */
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .widget-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent);
+        }
+
+        .order-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .order-item {
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease;
+            -webkit-app-region: no-drag;
+        }
+
+        .order-customer {
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 13px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .order-products {
+            color: var(--text-primary);
+            font-size: 11px;
+            line-height: 1.3;
+            opacity: 0.8;
+        }
+
+        .empty {
+            font-size: 12px;
+            font-style: italic;
+            opacity: 0.5;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="widget-header">
+        <span class="widget-title">Nové Objednávky</span>
+    </div>
+    <div id="orderList" class="order-list">
+        <div class="empty">Načítání...</div>
+    </div>
+
+    <script>
+        function updateTheme() {
+            // Basic match-media for theme
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        }
+        updateTheme();
+
+        function updateOrders(orders) {
+            const el = document.getElementById('orderList');
+            if (!orders || orders.length === 0) {
+                el.innerHTML = '<div class="empty">Žádné nové objednávky</div>';
+                return;
+            }
+            el.innerHTML = orders.map(o => `
+        <div class="order-item">
+          <span class="order-customer">${escapeHtml(o.customer)}</span>
+          <span class="order-products">${escapeHtml(o.products)}</span>
+        </div>
+      `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Connect to WebSocket
+        function connect() {
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'orders_update') {
+                    updateOrders(data.orders);
+                }
+            };
+
+            ws.onclose = () => setTimeout(connect, 3000);
+        }
+
+        connect();
+    </script>
+</body>
+
+</html>

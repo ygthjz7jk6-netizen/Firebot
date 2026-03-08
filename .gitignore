@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# MacOS
+.DS_Store
+
+# PyInstaller App Build
+build/
+dist/
+*.spec
+Firebot.app/
+
+# SQLite / Databases / Memory
+*.db
+*.sqlite3
+chroma_data/
+memory/*.json
+!memory/chroma_memory.py
+
+# Logs
+*.log
+/tmp/
