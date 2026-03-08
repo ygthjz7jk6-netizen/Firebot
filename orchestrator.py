@@ -869,16 +869,23 @@ def specialist_node(state: AgentState) -> AgentState:
                 if act.get("action") == "web_search":
                     query = act.get("query", task)
                     
+                    # FIX #7: Použití sjednoceného vyhledávání (Tavily + DDG fallback)
+                    from tools.web_search import web_search_unified
+                    
                     # Simulace terminálového logu pro uživatele
                     console.print("\n[bold white]— TERMINÁLOVÝ LOG —[/bold white]")
-                    console.print(f"[green]theodosius@firebot[/green]:[blue]~[/blue]$ ddg-search --query \"{query}\"")
-                    console.print(f"  [cyan]STATUS:[/cyan] Connecting to DuckDuckGo protocol...")
+                    console.print(f"[green]theodosius@firebot[/green]:[blue]~[/blue]$ web-search --query \"{query}\"")
+                    console.print(f"  [cyan]STATUS:[/cyan] Connecting to global search protocols...")
                     
-                    search_results = ddg_search(query)
+                    search_results = web_search_unified(query)
                     
                     # Výpis "surových" dat pro efekt terminálu
-                    raw_count = len(search_results.split("---")) - 1
-                    console.print(f"  [cyan]DATA:[/cyan] Received {raw_count} results from indices. Synthesizing...")
+                    if "❌" in search_results:
+                        console.print(f"  [red]ERROR:[/red] Connection failed.")
+                    elif "❓" in search_results:
+                        console.print(f"  [yellow]WARN:[/yellow] No results found in index.")
+                    else:
+                        console.print(f"  [cyan]DATA:[/cyan] Success. Received relevant indices. Synthesizing...")
                     console.print("[bold white]—————————————————[/bold white]\n")
                     
                     synthesis_response = model.invoke([
@@ -886,7 +893,7 @@ def specialist_node(state: AgentState) -> AgentState:
                         HumanMessage(content="Napiš stručně a jasně co jsi zjistil.")
                     ])
                     
-                    extra_messages = [AIMessage(content=f"🌐 **Internet (DDG):**\n{synthesis_response.content}")]
+                    extra_messages = [AIMessage(content=f"🌐 **Internet (Seach):**\n{synthesis_response.content}")]
                     break
         except Exception as e:
             console.print(f"  [red]❌ Chyba ve webovém hledání: {e}[/red]")
