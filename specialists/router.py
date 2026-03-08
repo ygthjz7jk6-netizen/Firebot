@@ -18,11 +18,11 @@ def get_specialist(name: str) -> tuple[ChatOllama, str]:
     
     Specialisté:
     - coding     → devstral-small-2
-    - marketing  → llama3.1:8b
+    - marketing  → gemma2:9b
     - fast       → llama3.1:8b
-    - research   → llama3.1:8b
-    - wordpress  → llama3.1:8b
-    - default    → llama3.1:8b
+    - research   → qwen2.5:7b
+    - wordpress  → gemma2:9b
+    - default    → qwen3.5:cloud
     """
 
     specialists = {
@@ -35,7 +35,7 @@ Vždy vysvětlíš co kód dělá, jednoduše a srozumitelně.
 Pokud je to možné, navrhni jak kód rozšířit nebo zlepšit.""",
         },
         "marketing": {
-            "model": os.getenv("MODEL_ORCHESTRATOR", "llama3.1:8b"),
+            "model": os.getenv("MODEL_MARKETING", "gemma2:9b"),
             "temperature": 0.7,
             "prompt": """Jsi zkušený marketingový specialista.
 Rozumíš značce, cílové skupině a digitálnímu marketingu.
@@ -49,8 +49,7 @@ Optimalizuješ pro SEO bez ztráty čitelnosti.""",
 Odpovídáš stručně a přesně. Nepiš zbytečné úvody.""",
         },
         "research": {
-            # 70b je příliš pomalá – 8b s detailním promptem dá dobré výsledky
-            "model": os.getenv("MODEL_FAST", "llama3.1:8b"),
+            "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
             "temperature": 0.2,
             "prompt": """Jsi analytik a výzkumný asistent.
 Analyzuješ informace kriticky, porovnáváš fakta.
@@ -58,7 +57,7 @@ Výsledky strukturuješ přehledně: shrnutí → klíčové body → závěr.
 Buď konkrétní, vyhni se obecným frázím.""",
         },
         "wordpress": {
-            "model": os.getenv("MODEL_ORCHESTRATOR", "llama3.1:8b"),
+            "model": os.getenv("MODEL_WORDPRESS", "gemma2:9b"),
             "temperature": 0.5,
             "prompt": """Jsi specialista na WordPress obsah a SEO.
 Píšeš články s jasnou strukturou: nadpis, perex, H2/H3, závěr.
@@ -66,7 +65,7 @@ Dodržuješ brand tón a píšeš pro cílovou skupinu.
 Výstup vždy v HTML nebo Markdown formátu vhodném pro WordPress.""",
         },
         "woocommerce": {
-            "model": os.getenv("MODEL_ORCHESTRATOR", "llama3.1:8b"),
+            "model": os.getenv("MODEL_WOOCOMMERCE", "llama3.1:8b"),
             "temperature": 0.1,
             "prompt": """Jsi WooCommerce specialista. Máš přístup k e-shopu přes API.
 
@@ -93,7 +92,11 @@ Vrať POUZE JSON pole, nic jiného.""",
         },
     }
 
-    config = specialists.get(name, specialists["fast"])
+    config = specialists.get(name, {
+        "model": os.getenv("MODEL_ORCHESTRATOR", "qwen3.5:cloud"),
+        "temperature": 0.3,
+        "prompt": "Jsi AI asistent Firebot."
+    })
 
     model = ChatOllama(
         model=config["model"],

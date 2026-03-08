@@ -46,12 +46,13 @@ Firebot používá architekturu **LangGraph**. Místo jednoho velkého LLM model
 ### 🔹 Specialisté a Modely
 | Specialista | Výchozí Model | Kdy se použije |
 |-------------|---------------|----------------|
-| **Orchestrátor** | `llama3.1:8b` | Hlavní rozcestník, detekce záměru. |
+| **Orchestrátor** | `qwen3.5:cloud` | Hlavní rozcestník, detekce záměru a generální chat. |
 | **WooCommerce** | `llama3.1:8b` | Vytváření produktů, kontrola skladu, objednávky. |
-| **WordPress** | `llama3.1:8b` | Psaní SEO článků a textů na blog. |
-| **Marketing** | `llama3.1:8b` | Reklamní texty a kampaně. |
-| **Coding** | `devstral-small-2`| Automatizace, analýza dat, skripty. |
-| **Fast** | `llama3.1:8b` | Běžný chat a jednoduché dotazy. |
+| **WordPress** | `gemma2:9b` | Psaní SEO článků a textů na blog. Tvořivý Google model. |
+| **Marketing** | `gemma2:9b` | Reklamní texty a kampaně. |
+| **Research**   | `qwen2.5:7b`| Rešerše a logická analytika informací. |
+| **Coding** | `devstral-small-2`| Automatizace, skripty, úpravy pythonu. |
+| **Fast** | `llama3.1:8b` | Běžný stručný chat a jednoduché dotazy. |
 
 ### 🔹 Paměť (ChromaDB)
 Firebot si pamatuje:
