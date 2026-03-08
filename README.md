@@ -46,10 +46,10 @@ Firebot používá architekturu **LangGraph**. Místo jednoho velkého LLM model
 ### 🔹 Specialisté a Modely
 | Specialista | Výchozí Model | Kdy se použije |
 |-------------|---------------|----------------|
-| **Orchestrátor** | `qwen3.5:cloud` | Hlavní rozcestník, detekce záměru. |
-| **WooCommerce** | `qwen3.5:cloud` | Vytváření produktů, kontrola skladu, objednávky. |
-| **WordPress** | `qwen3.5:cloud` | Psaní SEO článků a textů na blog. |
-| **Marketing** | `qwen3.5:cloud` | Reklamní texty a kampaně. |
+| **Orchestrátor** | `llama3.1:8b` | Hlavní rozcestník, detekce záměru. |
+| **WooCommerce** | `llama3.1:8b` | Vytváření produktů, kontrola skladu, objednávky. |
+| **WordPress** | `llama3.1:8b` | Psaní SEO článků a textů na blog. |
+| **Marketing** | `llama3.1:8b` | Reklamní texty a kampaně. |
 | **Coding** | `devstral-small-2`| Automatizace, analýza dat, skripty. |
 | **Fast** | `llama3.1:8b` | Běžný chat a jednoduché dotazy. |
 

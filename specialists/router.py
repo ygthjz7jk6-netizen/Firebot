@@ -18,10 +18,11 @@ def get_specialist(name: str) -> tuple[ChatOllama, str]:
     
     Specialisté:
     - coding     → devstral-small-2
-    - marketing  → qwen3.5:cloud  
+    - marketing  → llama3.1:8b
     - fast       → llama3.1:8b
-    - research   → llama3.1:70b
-    - default    → qwen3.5:cloud
+    - research   → llama3.1:8b
+    - wordpress  → llama3.1:8b
+    - default    → llama3.1:8b
     """
 
     specialists = {
@@ -34,7 +35,7 @@ Vždy vysvětlíš co kód dělá, jednoduše a srozumitelně.
 Pokud je to možné, navrhni jak kód rozšířit nebo zlepšit.""",
         },
         "marketing": {
-            "model": os.getenv("MODEL_ORCHESTRATOR", "qwen3.5:cloud"),
+            "model": os.getenv("MODEL_ORCHESTRATOR", "llama3.1:8b"),
             "temperature": 0.7,
             "prompt": """Jsi zkušený marketingový specialista.
 Rozumíš značce, cílové skupině a digitálnímu marketingu.
@@ -57,7 +58,7 @@ Výsledky strukturuješ přehledně: shrnutí → klíčové body → závěr.
 Buď konkrétní, vyhni se obecným frázím.""",
         },
         "wordpress": {
-            "model": os.getenv("MODEL_ORCHESTRATOR", "qwen3.5:cloud"),
+            "model": os.getenv("MODEL_ORCHESTRATOR", "llama3.1:8b"),
             "temperature": 0.5,
             "prompt": """Jsi specialista na WordPress obsah a SEO.
 Píšeš články s jasnou strukturou: nadpis, perex, H2/H3, závěr.
