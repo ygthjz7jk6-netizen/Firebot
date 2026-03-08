@@ -120,13 +120,26 @@ Vrať POUZE JSON pole, nic jiného.""",
         "science": {
             "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
             "temperature": 0.2,
-            "prompt": """Jsi vědecký specialista a inženýr materiálů se zaměřením na bio-založené synteniky, udržitelné textilie a materiály pro outdoorové vybavení a oblečení (např. nepromokavé vrstvy, odolná vlákna).
-Pokud jsi sestrojen navrhovat chemické sloučeniny k otestování, VŽDY to zkus první u Vituální laboratoře pro získání chemo-fyzikálních parametrů (hmotnost, LogP pro hydrofobitu atd.).
+            "prompt": """Jsi Science Researcher – specialista na vědeckou rešerši v oblasti textilií a outdoorových materiálů.
+Tvým úkolem je vyhledávat data v odborných databázích (PubMed), sumarizovat zjištěné poznatky a připravit podklady pro vývoj.
 DŮLEŽITÉ: Odpověz POUZE platným JSON polem příslušné akce. Žádný text kolem.
 
 Dostupné akce:
-1. {"action": "pubmed_search", "query": "anglický dotaz pro pubmed např. bio-based polyurethane textile"}
-2. {"action": "virtual_lab", "smiles": "chemický zápis sloučeniny ve formátu SMILES"}
+1. {"action": "pubmed_search", "query": "anglický dotaz pro pubmed"}
+"""
+        },
+        "scientist": {
+            "model": os.getenv("MODEL_SCIENTIST", "deepseek-r1:7b"),
+            "temperature": 0.3,
+            "prompt": """Jsi Scientist – expert na biomateriály se zaměřením na technický textil a outdoor. 
+Tvým cílem je navrhovat materiály, které jsou lehké, odolné (v oděru i tahu) a udržitelné. Při návrhu využívej principy biomimetiky a polymerní chemie. 
+Pokud navrhuješ nový materiál, uveď jeho předpokládané mechanické vlastnosti a metodu testování (např. Martindale test pro oděr).
+Před finálním návrhem VŽDY otestuj chemickou strukturu ve Virtuální laboratoři (RDKit) pro získání parametrů hydrofobity (LogP).
+
+DŮLEŽITÉ: Odpověz POUZE platným JSON polem příslušné akce. Žádný text kolem.
+
+Dostupné akce:
+1. {"action": "virtual_lab", "smiles": "chemický zápis sloučeniny ve formátu SMILES"}
 """
         },
     }

@@ -51,7 +51,8 @@ Firebot používá architekturu **LangGraph**. Místo jednoho velkého LLM model
 | **WordPress** | `gemma2:9b` | Psaní SEO článků a textů na blog. Tvořivý Google model. |
 | **Marketing** | `gemma2:9b` | Reklamní texty a kampaně. |
 | **Research**   | `qwen2.5:7b`| Rešerše a logická analytika informací. |
-| **Science**    | `qwen2.5:7b`| Vědecký výzkum z odborných databází (PubMed, atd.). |
+| **Science**    | `qwen2.5:7b`| **Researcher** – Vyhledává vědecká data a studie (PubMed). |
+| **Scientist**  | `deepseek-r1:7b`| **Sci-Eng** – Návrh a virtuální testování materiálů (biomimetika, RDKit). |
 | **Web**        | `qwen2.5:7b`| Rychlé vyhledávání na internetu (DuckDuckGo). |
 | **Social Media**| `gemma2:9b` | Zjišťování virálních trendů na TikToku a Instagramu. |
 | **Coding** | `devstral-small-2`| Automatizace, skripty, úpravy pythonu. |

@@ -939,7 +939,7 @@ def specialist_node(state: AgentState) -> AgentState:
         except Exception as e:
             pass
 
-    # === Science Agent ===
+    # === Science Researcher Agent ===
     if specialist_name == "science":
         import json as _json
         try:
@@ -963,23 +963,44 @@ def specialist_node(state: AgentState) -> AgentState:
                             
                             console.print(f"  [magenta]🧠 Syntetizuji vědecká data...[/magenta]")
                             synthesis_response = model.invoke([
-                                SystemMessage(content=f"Jsi vědecký specialista dělající rešerši úkolu: '{task}'. Našel jsi v databázi PubMed následující abstrakty. Vytvoř ucelenou odbornou zprávu a shrnutí. Používej odrážky a zachovej zmínky o PMIDs studií.\n\n{res_text}"),
-                                HumanMessage(content="Sestav závěrečnou zprávu o svém zjištění z PubMed.")
+                                SystemMessage(content=f"Jsi vědecký specialista (Science Researcher). Našel jsi v databázi PubMed následující abstrakty pro úkol: '{task}'. Vytvoř ucelenou odbornou zprávu a shrnutí, které poslouží jako podklad pro další vývoj materiálu. Používej odrážky a zachovej zmínky o PMIDs studií.\n\n{res_text}"),
+                                HumanMessage(content="Sestav závěrečnou rešerši z PubMed.")
                             ])
                             
                             response.content = synthesis_response.content
                             extra_messages = [response]
                             break
-                        elif act.get("action") == "virtual_lab":
+        except Exception as e:
+            pass
+
+    # === Scientist Agent (deepseek-r1) ===
+    if specialist_name == "scientist":
+        import json as _json
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            
+            if content.startswith("[") or content.startswith("{"):
+                import re
+                json_match = re.search(r'\[.*\]|\{.*\}', content, re.DOTALL)
+                if json_match:
+                    parsed = _json.loads(json_match.group(0))
+                    if not isinstance(parsed, list):
+                        parsed = [parsed]
+                    
+                    for act in parsed:
+                        if act.get("action") == "virtual_lab":
                             smiles = act.get("smiles", "")
                             console.print(f"  [magenta]🧪 Posílám '{smiles}' do Virtuální Laboratoře k analýze...[/magenta]")
                             from tools.virtual_lab import test_molecule
                             res_text = test_molecule(smiles)
                             
-                            console.print(f"  [magenta]🧠 Zhodnocuji laboratorní výsledky...[/magenta]")
+                            console.print(f"  [magenta]🧠 Scientist vyhodnocuje laboratorní výsledky...[/magenta]")
+                            # Zde používáme uživatelem definovaný promt pro Scientista
                             synthesis_response = model.invoke([
-                                SystemMessage(content=f"Jsi inženýr přes high-tech textilie a materiály pro outdoor. Navrhl jsi chemickou strukturu: '{smiles}'. Z Virtuální Laboratoře jsi obdržel tento fyzikálně-chemický protokol. Zhodnoť, jestli je látka vhodná pro outdoorové vybavení (např. DWR zátěry, membrány, nepromokavá vlákna). Navrhni, co případně chemicky změnit pro lepší hydrofobitu nebo odolnost.\n\n{res_text}"),
-                                HumanMessage(content="Vyhodnoť laboratorní zprávu z pohledu vývoje outdoorových materiálů a navrhni úpravu.")
+                                SystemMessage(content="Jsi expert na biomateriály se zaměřením na technický textil a outdoor. Tvým cílem je navrhovat materiály, které jsou lehké, odolné (v oděru i tahu) a udržitelné. Při návrhu využívej principy biomimetiky a polymerní chemie. Pokud navrhuješ nový materiál, uveď jeho předpokládané mechanické vlastnosti a metodu testování (např. Martindale test pro oděr)."),
+                                HumanMessage(content=f"Právě jsi navrhl strukturu '{smiles}' a laboratoř ti vrátila tyto fyzikálně-chemické výsledky:\n\n{res_text}\n\nProveď finální zhodnocení návrhu materiálu a popiš jeho vlastnosti.")
                             ])
                             
                             response.content = synthesis_response.content
