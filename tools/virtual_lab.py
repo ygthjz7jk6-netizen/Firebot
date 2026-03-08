@@ -47,23 +47,30 @@ def test_molecule(smiles: str) -> str:
         # Krok 3: Sestav laboratorní protokol
         report = []
         report.append(f"🧪 **Laboratorní Protokol pro '{smiles}'**")
-        report.append(f"- **Molekulární hmotnost (MW):** {mw:.2f} g/mol")
-        report.append(f"- **Lipofilita (LogP):** {logp:.2f} (nižší = hydrofilnější/rozpustnější ve vodě, vyšší = lipofilnější)")
-        report.append(f"- **H-donory / H-akceptory:** {hbd} / {hba} (ovlivňuje vazbu na proteiny a rozpustnost)")
-        report.append(f"- **Polární plocha povrchu (TPSA):** {tpsa:.2f} Å² (ovlivňuje buněčnou prostupnost)")
-        report.append(f"- **Počet rotovatelných vazeb:** {rot_bonds} (ukazatel flexibility struktury)")
+        report.append(f"- **Molekulární hmotnost (MW):** {mw:.2f} g/mol (Ukazatel mechanické odolnosti polymeru)")
+        report.append(f"- **Hydrofobita (LogP):** {logp:.2f} (Klíčové pro voděodolnost outdoorového oblečení: LogP > 3 = silně hydrofobní/voděodpudivé, LogP < 0 = hydrofilní/saje vodu)")
+        report.append(f"- **Polární plocha povrchu (TPSA):** {tpsa:.2f} Å² (Nižší TPSA znamená lepší bariérové vlastnosti proti vodě)")
+        report.append(f"- **Počet rotovatelných vazeb:** {rot_bonds} (Více = ohebnější textilní vlákno, méně = tužší materiál)")
         
-        # 4: Zhodnocení na základě Lipinského pravidla pěti (pouze základ)
-        violations = 0
-        if mw > 500: violations += 1
-        if logp > 5: violations += 1
-        if hbd > 5: violations += 1
-        if hba > 10: violations += 1
+        # 4: Zhodnocení vlastností pro outdoorové vybavení
+        strengths = []
+        weaknesses = []
         
-        if violations == 0:
-            report.append("\n✅ **Závěr laboratoře:** Sloučenina vyhovuje Lipinského pravidlům (pravděpodobně dobrá farmakokinetika/biokompatibilita).")
-        else:
-            report.append(f"\n⚠️ **Slabé místo:** Zjištěno {violations} porušení Lipinského pravidel. Zvaž iteraci struktury (např. snížení velikosti nebo počtu skupin).")
+        if logp > 2.5:
+            strengths.append("Dobrý potenciál pro DWR (Durable Water Repellent) úpravu nebo voděodolné membrány.")
+        elif logp < 0:
+            weaknesses.append("Materiál bude náchylný k nasákavosti vodou (hydrofilní) - nevhodné jako vnější outdoorová vrstva, leda pro odvod potu (base layer).")
+            
+        if tpsa > 80:
+            weaknesses.append("Příliš vysoká polarita může narušit bariérové vlastnosti proti vlhkosti.")
+            
+        if mw < 100:
+            weaknesses.append("Příliš malá molekula (monomer), pro reálné mechanické vlastnosti bude nutná polymerizace.")
+            
+        if strengths:
+            report.append(f"\n✅ **Silné stránky materiálu:** {' '.join(strengths)}")
+        if weaknesses:
+            report.append(f"\n⚠️ **Slabá místa materiálu:** {' '.join(weaknesses)}")
             
         return "\n".join(report)
 

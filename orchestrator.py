@@ -978,8 +978,8 @@ def specialist_node(state: AgentState) -> AgentState:
                             
                             console.print(f"  [magenta]🧠 Zhodnocuji laboratorní výsledky...[/magenta]")
                             synthesis_response = model.invoke([
-                                SystemMessage(content=f"Jsi vědecký inženýr. Navrhl jsi molekulu: '{smiles}'. Z Virtuální Laboratoře jsi obdržel tento protokol fyzikálně-chemických vlastností (Lipinského pravidla atd.). Zhodnoť, jestli je látka vhodným biomateriálem nebo léčivem, případně navrhni, co chemicky změnit pro zlepšení vlastností.\n\n{res_text}"),
-                                HumanMessage(content="Vyhodnoť laboratorní zprávu a navrhni případnou úpravu struktury.")
+                                SystemMessage(content=f"Jsi inženýr přes high-tech textilie a materiály pro outdoor. Navrhl jsi chemickou strukturu: '{smiles}'. Z Virtuální Laboratoře jsi obdržel tento fyzikálně-chemický protokol. Zhodnoť, jestli je látka vhodná pro outdoorové vybavení (např. DWR zátěry, membrány, nepromokavá vlákna). Navrhni, co případně chemicky změnit pro lepší hydrofobitu nebo odolnost.\n\n{res_text}"),
+                                HumanMessage(content="Vyhodnoť laboratorní zprávu z pohledu vývoje outdoorových materiálů a navrhni úpravu.")
                             ])
                             
                             response.content = synthesis_response.content
