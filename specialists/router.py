@@ -52,10 +52,14 @@ Odpovídáš stručně a přesně. Nepiš zbytečné úvody.""",
         "research": {
             "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
             "temperature": 0.2,
-            "prompt": """Jsi analytik a výzkumný asistent.
-Analyzuješ informace kriticky, porovnáváš fakta.
-Výsledky strukturuješ přehledně: shrnutí → klíčové body → závěr.
-Buď konkrétní, vyhni se obecným frázím.""",
+            "prompt": """Jsi analytik a výzkumný asistent pro hluboké (deep) rešerše.
+Analyzuješ informace kriticky a porovnáváš fakta.
+
+Pokud nemáš dostatek aktuálních dat k odpovědi, MŮŽEŠ použít placené pokročilé API Tavily k získání lepších zdrojů.
+Když to uděláš, odpověz POUZE JSON polem:
+1. {"action": "deep_research", "query": "co hluboce analyzovat"}
+
+Pokud máš data, odpověz strukturovaně: shrnutí → klíčové body → závěr."""
         },
         "wordpress": {
             "model": os.getenv("MODEL_WORDPRESS", "gemma2:9b"),
@@ -68,7 +72,7 @@ Výstup vždy v HTML nebo Markdown formátu vhodném pro WordPress.""",
         "web": {
             "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
             "temperature": 0.1,
-            "prompt": """Jsi specialista na vyhledávání na internetu. Budeš vyhledávat aktuální informace, které agent z tréninku ještě logicky nezná.
+            "prompt": """Jsi specialista na běžné, bezplatné internetové vyhledávání faktů a novinek.
 DŮLEŽITÉ: Odpověz POUZE platným JSON polem akcí s klíčovým slovem hledání. Žádný text kolem. Žádné komentáře.
 Dostupná akce:
 1. {"action": "web_search", "query": "co hledáš"}
@@ -134,7 +138,7 @@ def route_to_specialist(task: str) -> str:
     if any(w in task_lower for w in ["marketing", "reklama", "kampaň", "brand", "text", "obsah"]):
         return "marketing"
     
-    if any(w in task_lower for w in ["analyzuj", "výzkum", "rešerše", "porovnej"]):
+    if any(w in task_lower for w in ["hlubok", "analyzuj", "deep research", "výzkum", "rešerše", "porovnej"]):
         return "research"
         
     if any(w in task_lower for w in ["hledej", "vyhledej", "internet", "zjisti na webu", "najdi na internetu", "nejnovější", "kdo vyhrál", "počasí", "hledat"]):

@@ -26,7 +26,7 @@ from specialists.model_switcher import get_best_model, get_model_status
 from tools.woocommerce import create_product, update_stock, update_price, list_orders, list_products, get_product
 from tools.image_processor import process_product_image, process_folder
 from tools.order_watcher import check_new_orders, format_orders_summary, check_orders_on_demand, start_order_scheduler
-from tools.web_search import tavily_search
+from tools.web_search import tavily_search, ddg_search
 
 base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(base_dir, '.env'))
@@ -844,23 +844,59 @@ def specialist_node(state: AgentState) -> AgentState:
             for act in actions:
                 if act.get("action") == "web_search":
                     query = act.get("query", task)
-                    console.print(f"  [cyan]🔍 Hledám na webu: '{query}'...[/cyan]")
+                    console.print(f"  [cyan]🔍 Hledám na webu (DuckDuckGo): '{query}'...[/cyan]")
                     
-                    # 1. Zavolej Tavily
-                    search_results = tavily_search(query)
+                    search_results = ddg_search(query)
                     
-                    # 2. Nech LLM (stejného specialistu) ať t i fakta sečte a napíše odpověď
                     console.print(f"  [cyan]🧠 Syntetizuji nalezená data...[/cyan]")
                     synthesis_response = model.invoke([
                         SystemMessage(content=f"Jsi asistent. Zeptali se tě: '{task}'. Našel jsi na internetu následující texty. Napiš uživateli velmi přímou, jasnou a přesnou odpověď na jeho otázku. Nepoužívej obecnou 'AI' omáčku. Odpověz v češtině:\n\n{search_results}"),
                         HumanMessage(content="Napiš stručně a jasně co jsi zjistil.")
                     ])
                     
-                    extra_messages = [AIMessage(content=f"🌐 **Internet:**\n{synthesis_response.content}")]
+                    extra_messages = [AIMessage(content=f"🌐 **Internet (DDG):**\n{synthesis_response.content}")]
                     break
         except Exception as e:
             console.print(f"  [red]❌ Chyba ve webovém hledání: {e}[/red]")
             extra_messages = [AIMessage(content=f"Nastal problém při vyhledávání na internetu: {e}")]
+
+    # === Deep Research: Tavily pro Research agenta ===
+    if specialist_name == "research":
+        import json as _json
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            
+            # Pokud model vrátil JSON s deep_research akcí
+            if content.startswith("[") or content.startswith("{"):
+                import re
+                json_match = re.search(r'\[.*\]|\{.*\}', content, re.DOTALL)
+                if json_match:
+                    parsed = _json.loads(json_match.group(0))
+                    if not isinstance(parsed, list):
+                        parsed = [parsed]
+                    
+                    for act in parsed:
+                        if act.get("action") == "deep_research":
+                            query = act.get("query", task)
+                            console.print(f"  [magenta]🔬 Provádím Deep Research (Tavily): '{query}'...[/magenta]")
+                            
+                            search_results = tavily_search(query, max_results=8) # Žádám o robustnější odpovědi
+                            
+                            console.print(f"  [magenta]🧠 Syntetizuji výzkumná data...[/magenta]")
+                            synthesis_response = model.invoke([
+                                SystemMessage(content=f"Jsi analytik dělající hlubokou rešerši úkolu: '{task}'. Našel jsi na internetu následující texty a zdroje. Vytvoř ucelenou, strukturovanou a logickou zprávu zjištěných faktů. Používej odrážky a formátování:\n\n{search_results}"),
+                                HumanMessage(content="Sestav závěrečnou zprávu o svém zjištění.")
+                            ])
+                            
+                            # Nahraď původní (JSON) odpověď syntetizovaným rešeršním výsledkem
+                            response.content = f"🔬 **Výsledky hlubokého výzkumu:**\n\n{synthesis_response.content}"
+                            extra_messages = [response]
+                            break
+        except Exception as e:
+            pass # Pokud to nebyl JSON nebo se zhroutilo hledání, prostě nechte původní odpověď modelui
+
 
 
     # Pokud jde o wordpress specialistu a uživatel chce publikovat → pošli na WP
