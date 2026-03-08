@@ -22,6 +22,7 @@ def get_specialist(name: str) -> tuple[ChatOllama, str]:
     - fast       → llama3.1:8b
     - research   → qwen2.5:7b
     - wordpress  → gemma2:9b
+    - web        → qwen2.5:7b
     - default    → qwen3.5:cloud
     """
 
@@ -63,6 +64,16 @@ Buď konkrétní, vyhni se obecným frázím.""",
 Píšeš články s jasnou strukturou: nadpis, perex, H2/H3, závěr.
 Dodržuješ brand tón a píšeš pro cílovou skupinu.
 Výstup vždy v HTML nebo Markdown formátu vhodném pro WordPress.""",
+        },
+        "web": {
+            "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
+            "temperature": 0.1,
+            "prompt": """Jsi specialista na vyhledávání na internetu. Budeš vyhledávat aktuální informace, které agent z tréninku ještě logicky nezná.
+DŮLEŽITÉ: Odpověz POUZE platným JSON polem akcí s klíčovým slovem hledání. Žádný text kolem. Žádné komentáře.
+Dostupná akce:
+1. {"action": "web_search", "query": "co hledáš"}
+Příklad: {"action": "web_search", "query": "počasí v Praze dnes"}
+"""
         },
         "woocommerce": {
             "model": os.getenv("MODEL_WOOCOMMERCE", "llama3.1:8b"),
@@ -123,8 +134,11 @@ def route_to_specialist(task: str) -> str:
     if any(w in task_lower for w in ["marketing", "reklama", "kampaň", "brand", "text", "obsah"]):
         return "marketing"
     
-    if any(w in task_lower for w in ["analyzuj", "výzkum", "rešerše", "porovnej", "najdi info"]):
+    if any(w in task_lower for w in ["analyzuj", "výzkum", "rešerše", "porovnej"]):
         return "research"
+        
+    if any(w in task_lower for w in ["hledej", "vyhledej", "internet", "zjisti na webu", "najdi na internetu", "nejnovější", "kdo vyhrál", "počasí", "hledat"]):
+        return "web"
 
     if any(w in task_lower for w in ["produkt", "sklad", "cena", "sleva", "objednavka", "objednávka", "objednávk", "varianta", "woocommerce"]):
         return "woocommerce"

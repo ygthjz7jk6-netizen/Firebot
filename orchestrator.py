@@ -26,6 +26,7 @@ from specialists.model_switcher import get_best_model, get_model_status
 from tools.woocommerce import create_product, update_stock, update_price, list_orders, list_products, get_product
 from tools.image_processor import process_product_image, process_folder
 from tools.order_watcher import check_new_orders, format_orders_summary, check_orders_on_demand, start_order_scheduler
+from tools.web_search import tavily_search
 
 base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(base_dir, '.env'))
@@ -214,6 +215,7 @@ PRAVIDLA DELEGOVÁNÍ:
 - marketing/reklama → DELEGUJ→marketing
 - analýza/výzkum → DELEGUJ→research
 - produkt/sklad/e-shop → DELEGUJ→woocommerce
+- hledání na internetu/nejnovější info → DELEGUJ→web
 - otázka na systém → odpověz sám
 - ostatní → DELEGUJ→fast
 
@@ -238,6 +240,7 @@ Dostupní specialisté:
 - marketing: slogany, reklama
 - research: analýza, výzkum
 - coding: programování, skripty
+- web: hledání informací na internetu
 
 Příklad odpovědi:
 [{"step": "Zpracovat a optimalizovat fotky ze složky", "specialist": "image_processor"}, {"step": "Napsat popis produktu", "specialist": "wordpress"}]
@@ -522,7 +525,8 @@ def orchestrator_node(state: AgentState) -> AgentState:
         "wordpress": ["článek", "clanek", "blog", "post", "publikuj", "napiš článek", "napis clanek", "úvod", "text na web", "seo text"],
         "coding": ["kód", "kod", "skript", "python", "funkce", "program", "code", "bash", "automatizace", "naprogramuj"],
         "marketing": ["marketing", "reklama", "kampaň", "kampan", "slogan", "brand", "sociální sítě", "newsletter"],
-        "research": ["analyzuj", "výzkum", "vyzkum", "rešerše", "reserse", "porovnej", "najdi info", "zjisti"],
+        "research": ["analyzuj", "výzkum", "vyzkum", "rešerše", "reserse", "porovnej"],
+        "web": ["hledej", "vyhledej", "internet", "zjisti na webu", "najdi info", "najdi na internetu", "nejnovější", "kdo vyhrál", "počasí", "hledat", "vyhledat"],
         "woocommerce": ["produkt", "sklad", "cena", "sleva", "objednávka", "objednávky", "objednavka", "objednavky", "objednávk", "varianta", "e-shop", "eshop", "woocommerce"],
     }
     
@@ -818,6 +822,46 @@ def specialist_node(state: AgentState) -> AgentState:
         if wc_results:
             summary = "\n".join(wc_results)
             extra_messages = [AIMessage(content=f"🛒 **WooCommerce výsledky:**\n{summary}")]
+
+    # === Web Search: parsuj JSON a hledej na netu ===
+    if specialist_name == "web":
+        import json as _json
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            
+            if not content.startswith("[") and not content.startswith("{"):
+                import re
+                json_match = re.search(r'\[.*\]|\{.*\}', content, re.DOTALL)
+                if json_match:
+                    content = json_match.group(0)
+
+            actions = _json.loads(content)
+            if not isinstance(actions, list):
+                actions = [actions]
+                
+            for act in actions:
+                if act.get("action") == "web_search":
+                    query = act.get("query", task)
+                    console.print(f"  [cyan]🔍 Hledám na webu: '{query}'...[/cyan]")
+                    
+                    # 1. Zavolej Tavily
+                    search_results = tavily_search(query)
+                    
+                    # 2. Nech LLM (stejného specialistu) ať t i fakta sečte a napíše odpověď
+                    console.print(f"  [cyan]🧠 Syntetizuji nalezená data...[/cyan]")
+                    synthesis_response = model.invoke([
+                        SystemMessage(content=f"Jsi asistent. Zeptali se tě: '{task}'. Našel jsi na internetu následující texty. Napiš uživateli velmi přímou, jasnou a přesnou odpověď na jeho otázku. Nepoužívej obecnou 'AI' omáčku. Odpověz v češtině:\n\n{search_results}"),
+                        HumanMessage(content="Napiš stručně a jasně co jsi zjistil.")
+                    ])
+                    
+                    extra_messages = [AIMessage(content=f"🌐 **Internet:**\n{synthesis_response.content}")]
+                    break
+        except Exception as e:
+            console.print(f"  [red]❌ Chyba ve webovém hledání: {e}[/red]")
+            extra_messages = [AIMessage(content=f"Nastal problém při vyhledávání na internetu: {e}")]
+
 
     # Pokud jde o wordpress specialistu a uživatel chce publikovat → pošli na WP
     if specialist_name == "wordpress" and state.get("publish_to_wp", False):
