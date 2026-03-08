@@ -556,7 +556,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
     
     matched_specialist = None
     for spec, keywords in keyword_routes.items():
-        if any(w in query_normalized for w in keywords): # FIX: Normalizace diakritiky pro routing
+        if any(strip_diacritics(w) in query_normalized for w in keywords): # FIX: Normalizace diakritiky pro routing
             matched_specialist = spec
             break
     
