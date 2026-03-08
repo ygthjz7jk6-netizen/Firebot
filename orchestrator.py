@@ -27,6 +27,7 @@ from tools.woocommerce import create_product, update_stock, update_price, list_o
 from tools.image_processor import process_product_image, process_folder
 from tools.order_watcher import check_new_orders, format_orders_summary, check_orders_on_demand, start_order_scheduler
 from tools.web_search import tavily_search, ddg_search
+from tools.social_trends import get_tiktok_trends, get_ig_trends
 
 base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(base_dir, '.env'))
@@ -213,6 +214,7 @@ PRAVIDLA DELEGOVÁNÍ:
 - článek/blog/text/SEO → DELEGUJ→wordpress
 - kód/skript/python → DELEGUJ→coding
 - marketing/reklama → DELEGUJ→marketing
+- sociální sítě/tiktok/instagram/trendy → DELEGUJ→social_media
 - analýza/výzkum → DELEGUJ→research
 - produkt/sklad/e-shop → DELEGUJ→woocommerce
 - hledání na internetu/nejnovější info → DELEGUJ→web
@@ -238,6 +240,7 @@ Dostupní specialisté:
 - wordpress: psaní textů, článků, popisků
 - woocommerce: vytváření produktů, nastavení cen, sklad
 - marketing: slogany, reklama
+- social_media: trendy na sítích (TikTok, Instagram)
 - research: analýza, výzkum
 - coding: programování, skripty
 - web: hledání informací na internetu
@@ -524,7 +527,8 @@ def orchestrator_node(state: AgentState) -> AgentState:
     keyword_routes = {
         "wordpress": ["článek", "clanek", "blog", "post", "publikuj", "napiš článek", "napis clanek", "úvod", "text na web", "seo text"],
         "coding": ["kód", "kod", "skript", "python", "funkce", "program", "code", "bash", "automatizace", "naprogramuj"],
-        "marketing": ["marketing", "reklama", "kampaň", "kampan", "slogan", "brand", "sociální sítě", "newsletter"],
+        "marketing": ["marketing", "reklama", "kampaň", "kampan", "slogan", "brand", "newsletter"],
+        "social_media": ["tiktok", "instagram", "ig", "virál", "trendy", "sociální sítě"],
         "research": ["analyzuj", "výzkum", "vyzkum", "rešerše", "reserse", "porovnej"],
         "web": ["hledej", "vyhledej", "internet", "zjisti na webu", "najdi info", "najdi na internetu", "nejnovější", "kdo vyhrál", "počasí", "hledat", "vyhledat"],
         "woocommerce": ["produkt", "sklad", "cena", "sleva", "objednávka", "objednávky", "objednavka", "objednavky", "objednávk", "varianta", "e-shop", "eshop", "woocommerce"],
@@ -897,7 +901,39 @@ def specialist_node(state: AgentState) -> AgentState:
         except Exception as e:
             pass # Pokud to nebyl JSON nebo se zhroutilo hledání, prostě nechte původní odpověď modelui
 
-
+    # === Social Media Agent ===
+    if specialist_name == "social_media":
+        import json as _json
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            
+            if content.startswith("[") or content.startswith("{"):
+                import re
+                json_match = re.search(r'\[.*\]|\{.*\}', content, re.DOTALL)
+                if json_match:
+                    parsed = _json.loads(json_match.group(0))
+                    if not isinstance(parsed, list):
+                        parsed = [parsed]
+                    
+                    for act in parsed:
+                        if act.get("action") == "check_tiktok":
+                            topic = act.get("topic", "")
+                            console.print(f"  [magenta]📱 Hledám TikTok trendy: {topic} ...[/magenta]")
+                            res_text = get_tiktok_trends(topic)
+                            response.content = res_text
+                            extra_messages = [response]
+                            break
+                        elif act.get("action") == "check_ig":
+                            topic = act.get("topic", "")
+                            console.print(f"  [magenta]📸 Hledám IG trendy: {topic} ...[/magenta]")
+                            res_text = get_ig_trends(topic)
+                            response.content = res_text
+                            extra_messages = [response]
+                            break
+        except Exception as e:
+            pass
 
     # Pokud jde o wordpress specialistu a uživatel chce publikovat → pošli na WP
     if specialist_name == "wordpress" and state.get("publish_to_wp", False):
