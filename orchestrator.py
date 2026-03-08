@@ -970,6 +970,21 @@ def specialist_node(state: AgentState) -> AgentState:
                             response.content = synthesis_response.content
                             extra_messages = [response]
                             break
+                        elif act.get("action") == "virtual_lab":
+                            smiles = act.get("smiles", "")
+                            console.print(f"  [magenta]🧪 Posílám '{smiles}' do Virtuální Laboratoře k analýze...[/magenta]")
+                            from tools.virtual_lab import test_molecule
+                            res_text = test_molecule(smiles)
+                            
+                            console.print(f"  [magenta]🧠 Zhodnocuji laboratorní výsledky...[/magenta]")
+                            synthesis_response = model.invoke([
+                                SystemMessage(content=f"Jsi vědecký inženýr. Navrhl jsi molekulu: '{smiles}'. Z Virtuální Laboratoře jsi obdržel tento protokol fyzikálně-chemických vlastností (Lipinského pravidla atd.). Zhodnoť, jestli je látka vhodným biomateriálem nebo léčivem, případně navrhni, co chemicky změnit pro zlepšení vlastností.\n\n{res_text}"),
+                                HumanMessage(content="Vyhodnoť laboratorní zprávu a navrhni případnou úpravu struktury.")
+                            ])
+                            
+                            response.content = synthesis_response.content
+                            extra_messages = [response]
+                            break
         except Exception as e:
             pass
 

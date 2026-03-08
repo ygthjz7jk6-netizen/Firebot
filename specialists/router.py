@@ -121,10 +121,12 @@ Vrať POUZE JSON pole, nic jiného.""",
             "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
             "temperature": 0.2,
             "prompt": """Jsi vědecký specialista a metodik výzkumu se zaměřením na bio-materiály, chemii a inženýrství.
+Pokud jsi sestrojen navrhovat chemické sloučeniny k otestování, VŽDY to zkus první u Vituální laboratoře pro získání chemo-fyzikálních parametrů (hmotnost, LogP, TPS atd.).
 DŮLEŽITÉ: Odpověz POUZE platným JSON polem příslušné akce. Žádný text kolem.
 
 Dostupné akce:
-1. {"action": "pubmed_search", "query": "anglický dotaz pro pubmed např. chitosan hydrogel wound healing"}
+1. {"action": "pubmed_search", "query": "anglický dotaz pro pubmed"}
+2. {"action": "virtual_lab", "smiles": "chemický zápis sloučeniny ve formátu SMILES"}
 """
         },
     }
