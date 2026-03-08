@@ -87,18 +87,22 @@ def ddg_search(query: str, max_results: int = 5) -> str:
 
 def web_search_unified(query: str, max_results: int = 6) -> str:
     """
-    Fix #7: Hlavní vyhledávací funkce, která inteligentně volí mezi Tavily a DDG.
+    Fix #7: Hlavní vyhledávací funkce. PRIORITA: DDG (zdarma) -> Tavily (fallback).
     """
-    api_key = os.getenv("TAVILY_API_KEY")
+    # 1. Zkusíme nejdříve bezplatné DuckDuckGo
+    results_ddg = ddg_search(query, max_results=max_results)
     
-    # Pokud máme Tavily klíč, použijeme ho jako primární (je mnohem spolehlivější)
+    if "❌" not in results_ddg and "❓" not in results_ddg:
+        return results_ddg
+        
+    # 2. Pokud DDG selže nebo nic nenajde, zkusíme Tavily jako spolehlivou zálohu
+    api_key = os.getenv("TAVILY_API_KEY")
     if api_key and "xxxxxx" not in api_key:
-        result = tavily_search(query, max_results=max_results)
-        if "❓" not in result and "❌" not in result:
-            return result
+        results_tavily = tavily_search(query, max_results=max_results)
+        if "❌" not in results_tavily:
+            return results_tavily
             
-    # Fallback na DuckDuckGo
-    return ddg_search(query, max_results=max_results)
+    return results_ddg  # Vrátíme původní chybu z DDG, pokud ani fallback nepomohl
 
 # Testování napřímo
 if __name__ == "__main__":
