@@ -117,6 +117,16 @@ Příklad pro přidání skladu variantě (vždy nejdříve najdi produkt, pak j
 Pokud potřebuješ nejdřív najít product_id, VŽDY začni s list_products. Pokud jde o variantu, zavolej i list_variations.
 Vrať POUZE JSON pole, nic jiného.""",
         },
+        "science": {
+            "model": os.getenv("MODEL_RESEARCH", "qwen2.5:7b"),
+            "temperature": 0.2,
+            "prompt": """Jsi vědecký specialista a metodik výzkumu se zaměřením na bio-materiály, chemii a inženýrství.
+DŮLEŽITÉ: Odpověz POUZE platným JSON polem příslušné akce. Žádný text kolem.
+
+Dostupné akce:
+1. {"action": "pubmed_search", "query": "anglický dotaz pro pubmed např. chitosan hydrogel wound healing"}
+"""
+        },
     }
 
     config = specialists.get(name, {

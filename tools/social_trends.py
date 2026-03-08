@@ -53,10 +53,13 @@ def get_ig_trends(hashtag: str = "") -> str:
     if not api_key or "xxxxxx" in api_key:
          return "❌ Chyba: `RAPIDAPI_KEY` není nastaven v `.env`."
 
-    # Náhledový endpoint (např. 'instagram-scraper-api2.p.rapidapi.com')
-    host = "instagram-scraper-api2.p.rapidapi.com"
+    # Uživatel vybral specificky: instagram-scraper-stable-api
+    host = "instagram-scraper-stable-api.p.rapidapi.com"
     tag = urllib.parse.quote(hashtag.replace("#", "") if hashtag else "viral")
-    url = f"https://{host}/v1/hashtag?hashtag={tag}"
+    
+    # Endpoint se liší dle konkrétního API, zde je obecný předpoklad pro hashtag search
+    # (pokud dokumentace uvádí např. /hashtag/explore, upravte níže):
+    url = f"https://{host}/hashtag/recent?hashtag={tag}"
     
     req = urllib.request.Request(url, headers={
         "X-RapidAPI-Key": api_key,

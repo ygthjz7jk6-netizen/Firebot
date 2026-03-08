@@ -28,6 +28,7 @@ from tools.image_processor import process_product_image, process_folder
 from tools.order_watcher import check_new_orders, format_orders_summary, check_orders_on_demand, start_order_scheduler
 from tools.web_search import tavily_search, ddg_search
 from tools.social_trends import get_tiktok_trends, get_ig_trends
+from tools.science_api import search_pubmed
 
 base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(base_dir, '.env'))
@@ -215,7 +216,8 @@ PRAVIDLA DELEGOVÁNÍ:
 - kód/skript/python → DELEGUJ→coding
 - marketing/reklama → DELEGUJ→marketing
 - sociální sítě/tiktok/instagram/trendy → DELEGUJ→social_media
-- analýza/výzkum → DELEGUJ→research
+- věda/výzkum materiálů/biologie/pubmed → DELEGUJ→science
+- analýza/obecný výzkum → DELEGUJ→research
 - produkt/sklad/e-shop → DELEGUJ→woocommerce
 - hledání na internetu/nejnovější info → DELEGUJ→web
 - otázka na systém → odpověz sám
@@ -241,7 +243,8 @@ Dostupní specialisté:
 - woocommerce: vytváření produktů, nastavení cen, sklad
 - marketing: slogany, reklama
 - social_media: trendy na sítích (TikTok, Instagram)
-- research: analýza, výzkum
+- science: odborný vědecký výzkum (PubMed, biomateriály, studie)
+- research: analýza, obecný výzkum
 - coding: programování, skripty
 - web: hledání informací na internetu
 
@@ -529,6 +532,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
         "coding": ["kód", "kod", "skript", "python", "funkce", "program", "code", "bash", "automatizace", "naprogramuj"],
         "marketing": ["marketing", "reklama", "kampaň", "kampan", "slogan", "brand", "newsletter"],
         "social_media": ["tiktok", "instagram", "ig", "virál", "trendy", "sociální sítě"],
+        "science": ["věda", "vědeck", "biomateriál", "pubmed", "studie", "odborný", "materiál"],
         "research": ["analyzuj", "výzkum", "vyzkum", "rešerše", "reserse", "porovnej"],
         "web": ["hledej", "vyhledej", "internet", "zjisti na webu", "najdi info", "najdi na internetu", "nejnovější", "kdo vyhrál", "počasí", "hledat", "vyhledat"],
         "woocommerce": ["produkt", "sklad", "cena", "sleva", "objednávka", "objednávky", "objednavka", "objednavky", "objednávk", "varianta", "e-shop", "eshop", "woocommerce"],
@@ -930,6 +934,40 @@ def specialist_node(state: AgentState) -> AgentState:
                             console.print(f"  [magenta]📸 Hledám IG trendy: {topic} ...[/magenta]")
                             res_text = get_ig_trends(topic)
                             response.content = res_text
+                            extra_messages = [response]
+                            break
+        except Exception as e:
+            pass
+
+    # === Science Agent ===
+    if specialist_name == "science":
+        import json as _json
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            
+            if content.startswith("[") or content.startswith("{"):
+                import re
+                json_match = re.search(r'\[.*\]|\{.*\}', content, re.DOTALL)
+                if json_match:
+                    parsed = _json.loads(json_match.group(0))
+                    if not isinstance(parsed, list):
+                        parsed = [parsed]
+                    
+                    for act in parsed:
+                        if act.get("action") == "pubmed_search":
+                            query = act.get("query", "")
+                            console.print(f"  [magenta]🔬 Hledám ve vědeckých studiích PubMed: '{query}' ...[/magenta]")
+                            res_text = search_pubmed(query, max_results=5)
+                            
+                            console.print(f"  [magenta]🧠 Syntetizuji vědecká data...[/magenta]")
+                            synthesis_response = model.invoke([
+                                SystemMessage(content=f"Jsi vědecký specialista dělající rešerši úkolu: '{task}'. Našel jsi v databázi PubMed následující abstrakty. Vytvoř ucelenou odbornou zprávu a shrnutí. Používej odrážky a zachovej zmínky o PMIDs studií.\n\n{res_text}"),
+                                HumanMessage(content="Sestav závěrečnou zprávu o svém zjištění z PubMed.")
+                            ])
+                            
+                            response.content = synthesis_response.content
                             extra_messages = [response]
                             break
         except Exception as e:
