@@ -36,6 +36,11 @@ load_dotenv(os.path.join(base_dir, '.env'))
 console = Console()
 OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+def set_console(new_console):
+    """Umožňuje externím modulům (např. UI) přesměrovat logování."""
+    global console
+    console = new_console
+
 
 
 # === WORDPRESS TOOL ===
@@ -335,6 +340,15 @@ def orchestrator_node(state: AgentState) -> AgentState:
     import re
     query_lower = last_message.lower()
 
+    # FIX: Normalizace diakritiky pro keyword routing
+    import unicodedata
+    def strip_diacritics(text):
+        return ''.join(
+            c for c in unicodedata.normalize('NFD', text)
+            if unicodedata.category(c) != 'Mn'
+        )
+    query_normalized = strip_diacritics(query_lower)
+
     # === PRIMY ROUTING BEZ MODELU - rychly a levny ===
 
     # -1. PRIORITA: Explicitní 'zapamatuj' = ulož do paměti
@@ -457,7 +471,9 @@ def orchestrator_node(state: AgentState) -> AgentState:
     pref_keywords = ["chci", "potřebuju", "potřebuji", "preferuju", "preferuji",
                      "barva", "rozměr", "materiál", "styl", "velikost",
                      "mám rád", "líbí se mi", "nechci", "neříkej", "pamatuj"]
-    if any(w in query_lower for w in pref_keywords) and len(last_message) > 20:
+    # FIX: Omezení ukládání preferencí pro běžné dotazy na produkty/objednávky
+    exclude_keywords = ["produkt", "objednávk", "objednavk", "sklad", "cena", "kolik", "seznam", "hledej", "vyhledej"]
+    if any(w in query_lower for w in pref_keywords) and len(last_message) > 20 and not any(w in query_lower for w in exclude_keywords):
         save_memory(last_message, category="user_preference")
 
     # 0. PRIORITA: Zpracovani obrazku - musí být PRVNÍ!
@@ -540,7 +556,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
     
     matched_specialist = None
     for spec, keywords in keyword_routes.items():
-        if any(w in query_lower for w in keywords):
+        if any(w in query_normalized for w in keywords): # FIX: Normalizace diakritiky pro routing
             matched_specialist = spec
             break
     
@@ -589,7 +605,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
             console.print(f"  [cyan]📋 Plán ({len(steps)} kroků):[/cyan]")
             for i, s in enumerate(steps):
                 console.print(f"    {i+1}. {s['step']}")
-                save_task(s['step'])
+                # FIX: Odstraněno automatické ukládání úkolů (Bug #2)
             return {
                 **state,
                 "pending_steps": steps,
@@ -852,11 +868,19 @@ def specialist_node(state: AgentState) -> AgentState:
             for act in actions:
                 if act.get("action") == "web_search":
                     query = act.get("query", task)
-                    console.print(f"  [cyan]🔍 Hledám na webu (DuckDuckGo): '{query}'...[/cyan]")
+                    
+                    # Simulace terminálového logu pro uživatele
+                    console.print("\n[bold white]— TERMINÁLOVÝ LOG —[/bold white]")
+                    console.print(f"[green]theodosius@firebot[/green]:[blue]~[/blue]$ ddg-search --query \"{query}\"")
+                    console.print(f"  [cyan]STATUS:[/cyan] Connecting to DuckDuckGo protocol...")
                     
                     search_results = ddg_search(query)
                     
-                    console.print(f"  [cyan]🧠 Syntetizuji nalezená data...[/cyan]")
+                    # Výpis "surových" dat pro efekt terminálu
+                    raw_count = len(search_results.split("---")) - 1
+                    console.print(f"  [cyan]DATA:[/cyan] Received {raw_count} results from indices. Synthesizing...")
+                    console.print("[bold white]—————————————————[/bold white]\n")
+                    
                     synthesis_response = model.invoke([
                         SystemMessage(content=f"Jsi asistent. Zeptali se tě: '{task}'. Našel jsi na internetu následující texty. Napiš uživateli velmi přímou, jasnou a přesnou odpověď na jeho otázku. Nepoužívej obecnou 'AI' omáčku. Odpověz v češtině:\n\n{search_results}"),
                         HumanMessage(content="Napiš stručně a jasně co jsi zjistil.")
@@ -1049,7 +1073,7 @@ def router_node(state: AgentState) -> str:
         return "orchestrator"  # Smyčka — zpět na orchestrátor pro další krok
     elif specialist == "done" or specialist == "":
         return "end"
-    elif specialist in ["coding", "wordpress", "marketing", "research", "fast", "woocommerce"]:
+    elif specialist in ["coding", "wordpress", "marketing", "research", "fast", "woocommerce", "web", "social_media", "science", "scientist"]: # FIX: Přidáni chybějící specialisté
         return "specialist"
     else:
         return "end"

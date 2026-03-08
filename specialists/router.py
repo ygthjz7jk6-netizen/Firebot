@@ -161,6 +161,11 @@ Dostupné akce:
 
 def route_to_specialist(task: str) -> str:
     """
+    # FIX #5: Poznámka o nepoužívání v orchestrator.py
+    # POZOR: Tato funkce není v současnosti volána z orchestrator.py.
+    # Orchestrátor používá vlastní keyword_routes slovník.
+    # Při přidání nového specialisty aktualizuj OBA místa.
+
     Jednoduchý router – podle klíčových slov vybere specialistu.
     Orchestrátor může tuto funkci přepsat vlastním rozhodnutím.
     """
@@ -186,5 +191,12 @@ def route_to_specialist(task: str) -> str:
 
     if any(w in task_lower for w in ["produkt", "sklad", "cena", "sleva", "objednavka", "objednávka", "objednávk", "varianta", "woocommerce"]):
         return "woocommerce"
+
+    # FIX #6: Přidáni specialisté science a scientist
+    if any(w in task_lower for w in ["věda", "vědeck", "pubmed", "studie", "biomateriál"]):
+        return "science"
+    
+    if any(w in task_lower for w in ["molekul", "smiles", "rdkit", "biomimetik", "virtual lab"]):
+        return "scientist"
 
     return "fast"
